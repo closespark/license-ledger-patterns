@@ -8,7 +8,7 @@ This tool performs neutral, data-driven analysis of municipal business license d
 
 ## Features
 
-### Pattern Detection
+### Single-Dataset Pattern Detection
 
 1. **Address Density Analysis**
    - Identifies addresses with multiple business licenses
@@ -34,6 +34,40 @@ This tool performs neutral, data-driven analysis of municipal business license d
    - Maps license density by ZIP code
    - Calculates licenses per address ratios
    - Identifies potential registered agent hubs
+
+### Cross-Dataset Analysis
+
+The tool also supports comprehensive analysis across multiple municipal datasets:
+
+1. **Address Clustering**
+   - Identifies addresses appearing in both business licenses and tax-delinquent records
+   - Detects high-density business addresses
+   - Flags properties with potential financial distress indicators
+
+2. **Name/Entity Matching**
+   - Fuzzy matching between license holders and contract suppliers
+   - Identifies license holders with tax-delinquent property connections
+   - Links related entities across datasets
+
+3. **License Age vs Contract Timing**
+   - Correlates business license issuance with contract awards
+   - Identifies temporal spikes in contract activity
+   - Flags same-day contract awards and short-duration contracts
+
+4. **Procurement Type Analysis**
+   - Analyzes distribution of procurement methods
+   - Identifies non-competitive award patterns
+   - Flags suppliers with high non-competitive contract concentrations
+
+5. **Agency Concentration**
+   - Measures supplier concentration by agency
+   - Identifies suppliers working across multiple agencies
+   - Flags agencies with high supplier concentration
+
+6. **Tax Delinquency Overlaps**
+   - Cross-references contractors with tax-delinquent property owners
+   - Identifies high-value and long-term delinquencies
+   - Flags potential enforcement gaps
 
 ### Output Formats
 
@@ -84,7 +118,27 @@ python cli.py your_license_data.csv \
   --zip-threshold 10
 ```
 
+### Cross-Dataset Analysis
+
+Analyze patterns across multiple municipal datasets:
+
+```bash
+# Run cross-dataset analysis with default data files
+python analyze_datasets.py
+
+# Specify custom data paths
+python analyze_datasets.py \
+  --licenses data/Business_Licenses.csv \
+  --contracts data/City_Contracts.csv \
+  --taxes data/Delinquent_Taxes.csv
+
+# Save reports
+python analyze_datasets.py --output report.txt --json results.json
+```
+
 ## Data Format
+
+### Single-Dataset Analysis (cli.py)
 
 The tool expects CSV or Excel files with the following structure:
 
@@ -107,6 +161,36 @@ The tool expects CSV or Excel files with the following structure:
 ### Example Data
 
 See `sample_data.csv` for a complete example dataset.
+
+### Cross-Dataset Analysis (analyze_datasets.py)
+
+For cross-dataset analysis, three CSV files are expected:
+
+**Business Licenses:**
+- `Business Name`: Legal business name
+- `Doing Business As`: DBA name (optional)
+- `Business Address`: Physical address
+- `Business Geo Location`: Geographic coordinates (optional)
+
+**City Contracts:**
+- `Agency/Department`: City agency or department
+- `Contract Number`: Unique contract identifier
+- `Contract Value`: Contract dollar value
+- `Supplier`: Contractor/vendor name
+- `Procurement Type`: Method of procurement
+- `Description`: Contract description
+- `Type of Solicitation`: Solicitation category
+- `Effective From`: Contract start date
+- `Effective To`: Contract end date
+
+**Delinquent Property Taxes:**
+- `Property Code`: Property identifier
+- `Current Owner Name 1`: Primary owner name
+- `Current Owner Name 2`: Secondary owner (optional)
+- `Physical Address`: Property address
+- `Total Due`: Amount owed
+- `Total Years Delinquent`: Duration of delinquency
+- `GIS Location`: Geographic coordinates (optional)
 
 ## Example Output
 
@@ -212,12 +296,53 @@ report = reporter.generate_full_report(
 print(report)
 ```
 
+### Cross-Dataset Analysis
+
+```python
+from cross_dataset_analyzer import CrossDatasetAnalyzer, format_report
+import json
+
+# Initialize with all three datasets
+analyzer = CrossDatasetAnalyzer(
+    licenses_path='data/Business_Licenses.csv',
+    contracts_path='data/City_Contracts.csv',
+    taxes_path='data/Delinquent_Taxes.csv'
+)
+
+# Run comprehensive analysis
+results = analyzer.generate_comprehensive_report()
+
+# Generate formatted text report
+report = format_report(results)
+print(report)
+
+# Access specific analysis results
+address_findings = results['analyses']['address_clustering']
+name_matches = results['analyses']['name_similarity']
+contract_timing = results['analyses']['contract_timing']
+procurement = results['analyses']['procurement_types']
+agency_data = results['analyses']['agency_concentration']
+tax_overlaps = results['analyses']['tax_delinquent_overlaps']
+
+# Get key findings and recommendations
+key_findings = results['key_findings']
+recommendations = results['follow_up_recommendations']
+
+# Export to JSON
+with open('results.json', 'w') as f:
+    json.dump(results, f, indent=2, default=str)
+```
+
 ## Testing
 
 Run the tool with sample data:
 
 ```bash
+# Single-dataset analysis
 python cli.py sample_data.csv
+
+# Cross-dataset analysis
+python analyze_datasets.py
 ```
 
 This demonstrates all pattern detection capabilities with realistic test data.
