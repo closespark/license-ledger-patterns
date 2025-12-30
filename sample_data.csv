@@ -1,0 +1,31 @@
+license_id,business_name,dba_name,address,city,state,zip_code,issue_date,license_type,owner_name
+L001,Acme Corporation,Quick Mart,123 Main St,Springfield,IL,62701,2024-01-15,Retail,John Smith
+L002,Beta Holdings LLC,Quick Shop,123 Main St,Springfield,IL,62701,2024-01-16,Retail,Jane Doe
+L003,Gamma Services Inc,Quick Stop,123 Main St,Springfield,IL,62701,2024-01-17,Retail,Bob Johnson
+L004,Delta Enterprises,Express Mart,123 Main St,Springfield,IL,62701,2024-01-18,Retail,Mary Wilson
+L005,Acme Corporation,Fast Food Place,456 Oak Ave,Springfield,IL,62701,2024-02-01,Restaurant,John Smith
+L006,ACME Corp,Coffee Shop,789 Elm St,Springfield,IL,62702,2024-02-02,Restaurant,John Smith
+L007,Acme Co.,Bakery,321 Pine St,Springfield,IL,62703,2024-02-03,Food Service,John Smith
+L008,Alpha Trading,General Store,555 Market St,Springfield,IL,62701,2024-01-14,Retail,Alice Brown
+L009,Alpha Trading Co,Hardware Store,555 Market St,Springfield,IL,62701,2024-01-15,Retail,Alice Brown
+L010,Universal Services LLC,Consulting,777 Business Blvd,Springfield,IL,62704,2024-03-01,Professional,Chris Lee
+L011,Universal Services,Tax Prep,777 Business Blvd,Springfield,IL,62704,2024-03-02,Professional,Chris Lee
+L012,Universal Solutions,Accounting,777 Business Blvd,Springfield,IL,62704,2024-03-03,Professional,Chris Lee
+L013,Zeta Manufacturing,Factory Outlet,999 Industrial Dr,Springfield,IL,62701,2024-01-10,Manufacturing,David Chen
+L014,Epsilon Retail,Convenience Store,111 Downtown St,Springfield,IL,62701,2024-01-11,Retail,Emma Davis
+L015,Theta Corporation,Office Supplies,222 Commerce Ave,Springfield,IL,62701,2024-01-12,Retail,Frank Miller
+L016,Iota Ventures,Tech Store,333 Innovation Way,Springfield,IL,62702,2024-04-01,Retail,Grace Taylor
+L017,Kappa Investments,Real Estate Office,100 Tower Plaza,Springfield,IL,62704,2024-04-15,Professional,Henry Anderson
+L018,Lambda Group,Insurance Agency,100 Tower Plaza,Springfield,IL,62704,2024-04-16,Professional,Isabel Martinez
+L019,Mu Holdings,Law Office,100 Tower Plaza,Springfield,IL,62704,2024-04-17,Professional,Jack Robinson
+L020,Nu Associates,Accounting Firm,100 Tower Plaza,Springfield,IL,62704,2024-04-18,Professional,Karen White
+L021,Xi Partners,Consulting Group,100 Tower Plaza,Springfield,IL,62704,2024-04-19,Professional,Leo Garcia
+L022,Omicron LLC,Medical Clinic,200 Health St,Springfield,IL,62703,2024-05-01,Healthcare,Maria Lopez
+L023,Pi Wellness,Dental Office,200 Health St,Springfield,IL,62703,2024-05-02,Healthcare,Nathan King
+L024,Rho Health Services,Pharmacy,200 Health St,Springfield,IL,62703,2024-05-03,Healthcare,Olivia Scott
+L025,Sigma Retail,Grocery Store,888 Shopping Center,Springfield,IL,62701,2024-06-01,Retail,Paul Green
+L026,Tau Enterprises,Clothing Store,888 Shopping Center,Springfield,IL,62701,2024-06-01,Retail,Quinn Baker
+L027,Upsilon Markets,Electronics,888 Shopping Center,Springfield,IL,62701,2024-06-02,Retail,Rachel Adams
+L028,Phi Stores,Sporting Goods,888 Shopping Center,Springfield,IL,62701,2024-06-02,Retail,Sam Turner
+L029,Chi Boutique,Gift Shop,888 Shopping Center,Springfield,IL,62701,2024-06-03,Retail,Tina Cooper
+L030,Psi Vendors,Food Court,888 Shopping Center,Springfield,IL,62701,2024-06-03,Restaurant,Uma Patel
