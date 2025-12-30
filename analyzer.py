@@ -145,10 +145,16 @@ class LicenseAnalyzer:
                     'license_count': len(cluster_licenses),
                     'addresses': cluster_licenses['address'].unique().tolist() if 'address' in cluster_licenses.columns else [],
                     'pattern_type': 'NAME_SIMILARITY',
-                    'risk_score': len(cluster) / 10.0,  # Normalized score
+                    'risk_score': min(len(cluster) / 10.0, 1.0),  # Normalized score capped at 1.0
                     'why_it_matters': f"{len(cluster)} similar business names found. Could indicate: "
                                      f"related entities, franchises, or attempts to obscure ownership."
                 })
+        
+        # Normalize risk scores based on largest cluster
+        if clusters:
+            max_cluster_size = max(c['cluster_size'] for c in clusters)
+            for cluster in clusters:
+                cluster['risk_score'] = cluster['cluster_size'] / max_cluster_size
         
         return sorted(clusters, key=lambda x: x['cluster_size'], reverse=True)
     
@@ -188,22 +194,26 @@ class LicenseAnalyzer:
         
         # Combine findings
         multiple_dbas = business_dbas[business_dbas['dba_count'] > 1].copy()
-        multiple_dbas['pattern_type'] = 'MULTIPLE_DBAS_PER_BUSINESS'
-        multiple_dbas['risk_score'] = multiple_dbas['dba_count'] / multiple_dbas['dba_count'].max() if len(multiple_dbas) > 0 else 0
-        multiple_dbas['why_it_matters'] = multiple_dbas.apply(
-            lambda row: f"Business operates under {row['dba_count']} different DBAs. "
-                       f"Could indicate: legitimate diversification or complexity obscuring ownership.",
-            axis=1
-        )
+        if len(multiple_dbas) > 0:
+            multiple_dbas['pattern_type'] = 'MULTIPLE_DBAS_PER_BUSINESS'
+            max_dba_count = multiple_dbas['dba_count'].max()
+            multiple_dbas['risk_score'] = multiple_dbas['dba_count'] / max_dba_count if max_dba_count > 0 else 0
+            multiple_dbas['why_it_matters'] = multiple_dbas.apply(
+                lambda row: f"Business operates under {row['dba_count']} different DBAs. "
+                           f"Could indicate: legitimate diversification or complexity obscuring ownership.",
+                axis=1
+            )
         
         shared_dbas = dba_businesses[dba_businesses['business_count'] > 1].copy()
-        shared_dbas['pattern_type'] = 'SHARED_DBA'
-        shared_dbas['risk_score'] = shared_dbas['business_count'] / shared_dbas['business_count'].max() if len(shared_dbas) > 0 else 0
-        shared_dbas['why_it_matters'] = shared_dbas.apply(
-            lambda row: f"DBA used by {row['business_count']} different businesses. "
-                       f"Could indicate: related entities or naming conflicts.",
-            axis=1
-        )
+        if len(shared_dbas) > 0:
+            shared_dbas['pattern_type'] = 'SHARED_DBA'
+            max_business_count = shared_dbas['business_count'].max()
+            shared_dbas['risk_score'] = shared_dbas['business_count'] / max_business_count if max_business_count > 0 else 0
+            shared_dbas['why_it_matters'] = shared_dbas.apply(
+                lambda row: f"DBA used by {row['business_count']} different businesses. "
+                           f"Could indicate: related entities or naming conflicts.",
+                axis=1
+            )
         
         return pd.concat([multiple_dbas, shared_dbas], ignore_index=True)
     
@@ -295,12 +305,19 @@ class LicenseAnalyzer:
         flagged = zip_groups[zip_groups['license_count'] >= zip_threshold].copy()
         flagged = flagged.sort_values('license_count', ascending=False)
         
-        # Calculate concentration ratio
-        flagged['concentration_ratio'] = flagged['license_count'] / flagged['unique_addresses']
-        flagged['concentration_ratio'] = flagged['concentration_ratio'].replace([np.inf, -np.inf], 0)
+        # Calculate concentration ratio (handle division by zero)
+        flagged['concentration_ratio'] = np.where(
+            flagged['unique_addresses'] > 0,
+            flagged['license_count'] / flagged['unique_addresses'],
+            0
+        )
         
         # Add risk scores
-        flagged['risk_score'] = flagged['concentration_ratio'] / flagged['concentration_ratio'].max() if len(flagged) > 0 else 0
+        if len(flagged) > 0:
+            max_concentration = flagged['concentration_ratio'].max()
+            flagged['risk_score'] = flagged['concentration_ratio'] / max_concentration if max_concentration > 0 else 0
+        else:
+            flagged['risk_score'] = 0
         flagged['pattern_type'] = 'GEOGRAPHIC_CONCENTRATION'
         flagged['why_it_matters'] = flagged.apply(
             lambda row: f"{row['license_count']} licenses in ZIP {row['zip_code']} "
