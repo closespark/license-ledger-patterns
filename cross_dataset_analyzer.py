@@ -242,7 +242,12 @@ class CrossDatasetAnalyzer:
         try:
             from Levenshtein import ratio
         except ImportError:
-            return {'error': 'python-Levenshtein not installed', 'matches': []}
+            return {
+                'error': 'python-Levenshtein not installed',
+                'license_contract_matches': [],
+                'license_tax_owner_matches': [],
+                'summary': {}
+            }
         
         # Get unique names from each dataset
         license_names = self.licenses['business_name_normalized'].dropna().unique()
@@ -580,7 +585,14 @@ class CrossDatasetAnalyzer:
         try:
             from Levenshtein import ratio
         except ImportError:
-            return {'error': 'python-Levenshtein not installed'}
+            return {
+                'error': 'python-Levenshtein not installed',
+                'high_value_delinquencies': [],
+                'long_term_delinquencies': [],
+                'business_owner_matches': [],
+                'supplier_tax_matches': [],
+                'summary': {}
+            }
         
         # High-value tax delinquencies
         high_value_delinquent = self.taxes[self.taxes['total_due'] >= 5000].copy()
@@ -591,53 +603,63 @@ class CrossDatasetAnalyzer:
         long_term = long_term.sort_values('years_delinquent', ascending=False)
         
         # Cross-reference high-value delinquent owners with business names
+        # Limit to top 100 delinquent owners and unique business names for performance
         matches_with_businesses = []
+        license_names_unique = self.licenses['business_name_normalized'].dropna().unique()
         for _, tax_row in high_value_delinquent.head(100).iterrows():
             owner = tax_row['owner_normalized']
             if not owner or len(owner) < 3:
                 continue
-                
-            for _, lic_row in self.licenses.iterrows():
-                business = lic_row['business_name_normalized']
+            
+            for business in license_names_unique:
                 if not business or len(business) < 3:
                     continue
                     
                 similarity = ratio(owner, business)
                 if similarity >= 0.80:
-                    matches_with_businesses.append({
-                        'tax_owner': tax_row['owner_name_1'],
-                        'business_name': lic_row['business_name'],
-                        'similarity': round(similarity, 3),
-                        'tax_address': tax_row['address'],
-                        'business_address': lic_row['address'],
-                        'total_due': tax_row['total_due'],
-                        'years_delinquent': tax_row['years_delinquent'],
-                        'pattern_type': 'HIGH_VALUE_TAX_BUSINESS_MATCH',
-                        'why_it_matters': f"Tax-delinquent property owner ({similarity*100:.1f}% name match) "
-                                        f"appears to operate business. ${tax_row['total_due']:,.2f} owed "
-                                        f"for {tax_row['years_delinquent']} years. Could indicate: "
-                                        f"financial distress, asset shielding, or enforcement priority."
-                    })
+                    # Get the first matching license for details
+                    lic_rows = self.licenses[self.licenses['business_name_normalized'] == business]
+                    if len(lic_rows) > 0:
+                        lic_row = lic_rows.iloc[0]
+                        matches_with_businesses.append({
+                            'tax_owner': tax_row['owner_name_1'],
+                            'business_name': lic_row['business_name'],
+                            'similarity': round(similarity, 3),
+                            'tax_address': tax_row['address'],
+                            'business_address': lic_row['address'],
+                            'total_due': tax_row['total_due'],
+                            'years_delinquent': tax_row['years_delinquent'],
+                            'pattern_type': 'HIGH_VALUE_TAX_BUSINESS_MATCH',
+                            'why_it_matters': f"Tax-delinquent property owner ({similarity*100:.1f}% name match) "
+                                            f"appears to operate business. ${tax_row['total_due']:,.2f} owed "
+                                            f"for {tax_row['years_delinquent']} years. Could indicate: "
+                                            f"financial distress, asset shielding, or enforcement priority."
+                        })
         
         # Contract suppliers with tax delinquencies
+        # Limit to unique owners for performance
         supplier_tax_matches = []
+        tax_owners_unique = self.taxes['owner_normalized'].dropna().unique()
         for supplier in self.contracts['supplier_normalized'].dropna().unique():
             if not supplier or len(supplier) < 3:
                 continue
-            for _, tax_row in self.taxes.iterrows():
-                owner = tax_row['owner_normalized']
+            for owner in tax_owners_unique:
                 if not owner or len(owner) < 3:
                     continue
                 similarity = ratio(supplier, owner)
                 if similarity >= 0.85:
-                    supplier_contracts = self.contracts[
-                        self.contracts['supplier_normalized'] == supplier
-                    ]
-                    supplier_tax_matches.append({
-                        'supplier': supplier,
-                        'tax_owner': tax_row['owner_name_1'],
-                        'similarity': round(similarity, 3),
-                        'contract_count': len(supplier_contracts),
+                    # Get matching tax record for details
+                    tax_rows = self.taxes[self.taxes['owner_normalized'] == owner]
+                    if len(tax_rows) > 0:
+                        tax_row = tax_rows.iloc[0]
+                        supplier_contracts = self.contracts[
+                            self.contracts['supplier_normalized'] == supplier
+                        ]
+                        supplier_tax_matches.append({
+                            'supplier': supplier,
+                            'tax_owner': tax_row['owner_name_1'],
+                            'similarity': round(similarity, 3),
+                            'contract_count': len(supplier_contracts),
                         'contract_value': supplier_contracts['contract_value_numeric'].sum(),
                         'total_tax_due': tax_row['total_due'],
                         'years_delinquent': tax_row['years_delinquent'],
