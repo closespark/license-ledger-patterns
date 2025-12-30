@@ -30,6 +30,7 @@ ENV/
 *.csv
 *.xlsx
 !sample_data.csv
+!data/*.csv
 output/
 reports/
 example_output.json
